@@ -59,10 +59,36 @@ class RefreshTokenView(APIView):
 class LogActionView(APIView):
   permission_classes = [IsAuthenticated]
   def post(self, request):
-    headers = dict(request.headers)
-    user_action = UserAction.objects.create(user=request.user, action=request.data, request_headers=headers)
-    user_action.save()
-    return Response({"message": "Action logged successfully"}, status=status.HTTP_200_OK)
+      try:
+          action_data = {
+              'user': request.user.id,
+              'action_type': request.data['action_type'],
+              'element_id': request.data['element_id'],
+              'timestamp': request.data['timestamp'],
+              'metadata': request.data.get('metadata', {}),  # keep .get() for optional field
+              'request_headers': dict(request.headers)
+          }
+
+          if action_data['action_type'] not in "click".split():
+            return Response({
+              "error": f"Action type {action_data['action_type']} not recognized."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+          user_action = UserAction.objects.create(**action_data)
+          
+          return Response({
+              "message": "Action logged successfully",
+              "action_id": user_action.id
+          }, status=status.HTTP_200_OK)
+
+      except KeyError as e:
+          return Response({
+              "error": f"Missing required field: {str(e)}"
+          }, status=status.HTTP_400_BAD_REQUEST)
+      except Exception as e:
+          return Response({
+              "error": f"Failed to log action: {str(e)}"
+          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 class UploadJupyterLogView(APIView):
   permission_classes = [IsAuthenticated]

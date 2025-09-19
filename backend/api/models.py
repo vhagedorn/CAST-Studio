@@ -1,6 +1,26 @@
+from rest_framework import serializers
 from django.db import models
 from users.models import User
 import uuid
+
+class PackedUInt14Field(serializers.Field):
+
+    def to_representation(self, value: int):
+        x = (value >> 14) & (0x3fff)
+        y = value & (0x3fff)
+
+        return {"x": x, "y": y}
+
+    def to_internal_value(self, data):
+        if not isinstance(data, dict) or "x" not in data or "y" not in data:
+            raise serializers.ValidationError("Expected object with 'x' and 'y' fields.")
+
+        x, y = int(data["x"]), int(data["y"])
+
+        if not (-8192 <= x < 8192) or not (-8192 <= y < 8192):
+            raise serializers.ValidationError("x and y must fit in signed 14-bit range (-8192..+8191 or <=u16383).")
+
+        return ((x & 0x3fff) << 14) | (y & 0x3fff)
 
 class UserAction(models.Model):
   """
@@ -8,7 +28,11 @@ class UserAction(models.Model):
   """
   id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
   user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id', related_name='user_actions')
-  action = models.JSONField(default=dict)
+  action = models.TextField(default="")
+  window_size = PackedUInt14Field(default=0)
+  dpr = models.IntegerField(default=1)
+  mouse_pos = PackedUInt14Field(default=0)
+  element = models.TextField(default="")
   request_headers = models.JSONField(default=dict)
   timestamp = models.DateTimeField(auto_now_add=True)
   

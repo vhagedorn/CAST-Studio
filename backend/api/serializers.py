@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import ImageData, NarrativeCache, JupyterLog
+from .models import ImageData, NarrativeCache, JupyterLog, UserAction
+
+class UserActionSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = UserAction
+    fields = '__all__'
 
 class ImageDataSerializer(serializers.ModelSerializer):
   class Meta:

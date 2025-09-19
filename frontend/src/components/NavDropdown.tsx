@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import home from '../assets/images/home.svg';
 import categories from '../assets/images/categories.svg';
 import browse from '../assets/images/browse.svg';
+import { logUserAction } from '../utils/logging';
 
 // Define props interface
 type NavDropdownProps = {
@@ -28,6 +29,7 @@ const NavDropdown = ({ setCenterNarrativePatternsOpen }: NavDropdownProps) => {
 
     // Handle dropdown selections
     const handleDropdownSelection = () => {
+        logUserAction("handleDropdownSelection", "click");
         navigate(`/construction`);
     }
 
@@ -92,7 +94,7 @@ const NavDropdown = ({ setCenterNarrativePatternsOpen }: NavDropdownProps) => {
                         Browse Narrative Patterns
                     </span>
                 </li>
-                <li className="cursor-pointer hover:text-indigo"
+                <li id="lol" className="cursor-pointer hover:text-indigo"
                 onClick={handleDropdownSelection}>
                     <span className="flex items-center justify-start">
                         <img src={home} alt="JupyterHub" className="w-4 h-4 mr-2" />
