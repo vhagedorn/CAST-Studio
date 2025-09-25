@@ -1,26 +1,24 @@
-from rest_framework import serializers
 from django.db import models
 from users.models import User
 import uuid
 
-class PackedUInt14Field(serializers.Field):
-
-    def to_representation(self, value: int):
+class PackedUInt14Field(models.PositiveIntegerField):
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return value
         x = (value >> 14) & (0x3fff)
         y = value & (0x3fff)
+        return (x, y)
 
-        return {"x": x, "y": y}
-
-    def to_internal_value(self, data):
-        if not isinstance(data, dict) or "x" not in data or "y" not in data:
-            raise serializers.ValidationError("Expected object with 'x' and 'y' fields.")
-
-        x, y = int(data["x"]), int(data["y"])
-
-        if not (-8192 <= x < 8192) or not (-8192 <= y < 8192):
-            raise serializers.ValidationError("x and y must fit in signed 14-bit range (-8192..+8191 or <=u16383).")
-
-        return ((x & 0x3fff) << 14) | (y & 0x3fff)
+    def get_prep_value(self, value):
+        if value is None:
+           return value
+        if isinstance(value, int):
+          return value # Value is already packed, do nothing.
+        if isinstance(value, tuple):
+          x,y = value
+          return ((x & 0x3fff) << 14) | (y & 0x3fff)
+        raise ValueError("PackedUInt14Field expects a tuple or an int.") 
 
 class UserAction(models.Model):
   """

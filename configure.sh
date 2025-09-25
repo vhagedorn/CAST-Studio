@@ -96,7 +96,7 @@ if [ $DO_SETUP = true ]; then
     cp tmp_dev_test_images/*.png "$CACHEDIR" 
 
     echo "> Create django superuser (username: ${USERNAME})"
-    set +eu
+    # set +eu
     set +o pipefail
     docker-compose -f $COMPOSE_FILE run --rm \
         -e DJANGO_SUPERUSER_USERNAME="${USERNAME}" \

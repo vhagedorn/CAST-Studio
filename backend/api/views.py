@@ -61,17 +61,21 @@ class LogActionView(APIView):
   def post(self, request):
       try:
           action_data = {
-              'user': request.user.id,
-              'action_type': request.data['action_type'],
-              'element_id': request.data['element_id'],
-              'timestamp': request.data['timestamp'],
-              'metadata': request.data.get('metadata', {}),  # keep .get() for optional field
-              'request_headers': dict(request.headers)
+              # id, user, action, window_size, dpr, mouse_pos, element, request_headers, timestamp
+              'id': uuid.uuid4(),
+              'user': User.objects.get(id=request.user.id),
+              'action': request.data['action_type'],
+              'window_size': tuple(request.data['window_size'].values()),
+              'dpr': request.data['dpr'],
+              'mouse_pos': tuple(request.data['mouse_pos'].values()),
+              'element': request.data['element_id'],
+              'request_headers': dict(request.headers),
+              'timestamp': request.data['timestamp']
           }
 
-          if action_data['action_type'] not in "click".split():
+          if action_data['action'] not in "click".split():
             return Response({
-              "error": f"Action type {action_data['action_type']} not recognized."
+              "error": f"Action type {action_data['action']} not recognized."
             }, status=status.HTTP_400_BAD_REQUEST)
 
           user_action = UserAction.objects.create(**action_data)
